@@ -1,0 +1,389 @@
+# Italian translation for tomedown.koplugin (KOReader).
+# Source: English strings. This translation applies when KOReader runs in Italian.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Export in progress…"
+msgstr "Esportazione in corso…"
+
+msgid "No chapter"
+msgstr "Senza capitolo"
+
+msgid "Book index"
+msgstr "Indice dei libri"
+
+msgid "%1 files exported locally"
+msgstr "%1 file esportati localmente"
+
+msgid "%1 files exported — upload when online"
+msgstr "%1 file esportati — verranno caricati al prossimo collegamento"
+
+msgid "No files exported"
+msgstr "Nessun file esportato"
+
+msgid "%1 files unchanged, skipped"
+msgstr "%1 file invariati, saltati"
+
+msgid "Cloud: %1 uploaded, %2 errors"
+msgstr "Cloud: %1 caricati, %2 errori"
+
+msgid "Cloud: %1 files uploaded"
+msgstr "Cloud: %1 file caricati"
+
+msgid "Errors:"
+msgstr "Errori:"
+
+msgid "Choose a cloud server in the settings first."
+msgstr "Scegli prima un server cloud nelle impostazioni."
+
+msgid "Nothing to upload, export something first."
+msgstr "Nessun file da caricare, esporta prima qualcosa."
+
+msgid "Uploading %1 files to the cloud…"
+msgstr "Caricamento di %1 file sul cloud…"
+
+msgid "Cloud: %1/%2 files uploaded, %3 errors"
+msgstr "Cloud: %1/%2 file caricati, %3 errori"
+
+msgid "Enable the \"Cloud storage\" plugin to upload to the cloud."
+msgstr "Abilita il plugin \"Cloud storage\" per caricare sul cloud."
+
+msgid "Remote folder on the server"
+msgstr "Cartella remota sul server"
+
+msgid "leave empty to use the folder chosen in the browser"
+msgstr "lascia vuoto per usare la cartella scelta nel browser"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Save"
+msgstr "Salva"
+
+msgid "Local folder for exports"
+msgstr "Cartella locale delle esportazioni"
+
+msgid "No books with highlights"
+msgstr "Nessun libro con evidenziati"
+
+msgid "Export selected (%1)"
+msgstr "Esporta selezionati (%1)"
+
+msgid "Deselect all"
+msgstr "Deseleziona tutto"
+
+msgid "Upload to cloud"
+msgstr "Carica su cloud"
+
+msgid "Server and folder: not set"
+msgstr "Server e cartella: non impostati"
+
+msgid "Server and folder: %1 → %2"
+msgstr "Server e cartella: %1 → %2"
+
+msgid "Server and folder: %1"
+msgstr "Server e cartella: %1"
+
+msgid "Remote folder: not set"
+msgstr "Cartella remota: non impostata"
+
+msgid "Remote folder: %1"
+msgstr "Cartella remota: %1"
+
+msgid "Local folder: %1"
+msgstr "Cartella locale: %1"
+
+msgid "Generate the index %1"
+msgstr "Genera l'indice %1"
+
+msgid "Export current book"
+msgstr "Esporta libro corrente"
+
+msgid "Export only what changed"
+msgstr "Esporta solo i cambiamenti"
+
+msgid "Choose books…"
+msgstr "Scegli libri…"
+
+msgid "Import all books from history"
+msgstr "Importa tutti i libri dalla cronologia"
+
+msgid "Reload everything to the cloud"
+msgstr "Ricarica tutto sul cloud"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Found %1 books in your KOReader reading history. Export their highlights now?"
+msgstr "Trovati %1 libri nella cronologia di lettura di KOReader. Esportare le evidenziazioni adesso?"
+
+msgid "Export"
+msgstr "Esporta"
+
+msgid "Not now"
+msgstr "Non ora"
+
+msgid ""
+"Exports each book's highlights into its own Markdown file,\n"
+"with frontmatter and an index, and uploads them to your cloud."
+msgstr ""
+"Esporta gli evidenziati di ogni libro in un file Markdown a parte,\n"
+"con frontmatter e indice, e li carica sul tuo cloud."
+
+msgid "highlights"
+msgstr "evidenziati"
+
+msgid "note: "
+msgstr "nota: "
+
+msgid "index"
+msgstr "indice"
+
+msgid "No exported books with highlights."
+msgstr "Nessun libro con evidenziati esportati."
+
+msgid "| Book | Author | Highlights | Last export |"
+msgstr "| Libro | Autore | Evidenziati | Ultimo export |"
+
+msgid "Update available: v%1 → v%2"
+msgstr "Aggiornamento disponibile: v%1 → v%2"
+
+msgid "Check for updates (v%1)"
+msgstr "Controlla aggiornamenti (v%1)"
+
+msgid "View changelog"
+msgstr "Vedi changelog"
+
+msgid "Changelog (%1 of %2)"
+msgstr "Changelog (%1 di %2)"
+
+msgid "Older"
+msgstr "Precedente"
+
+msgid "Newer"
+msgstr "Successivo"
+
+msgid "Refresh"
+msgstr "Aggiorna"
+
+msgid "(no notes for this release)"
+msgstr "(nessuna nota per questa release)"
+
+msgid "Fetching changelog..."
+msgstr "Recupero changelog..."
+
+msgid "Could not fetch the changelog."
+msgstr "Impossibile recuperare il changelog."
+
+msgid "Check for updates in background"
+msgstr "Controlla aggiornamenti in background"
+
+msgid "Developer updates"
+msgstr "Aggiornamenti per sviluppatori"
+
+msgid "Check for updates"
+msgstr "Controlla aggiornamenti"
+
+msgid "Reset to latest stable release"
+msgstr "Ripristina all'ultima release stabile"
+
+msgid "This will install the latest stable release of Tomedown, then restart KOReader. Continue?"
+msgstr "Questo installerà l'ultima release stabile di Tomedown e riavvierà KOReader. Continuare?"
+
+msgid "Reset"
+msgstr "Ripristina"
+
+msgid "Could not fetch latest release."
+msgstr "Impossibile recuperare l'ultima release."
+
+msgid "Latest release has no downloadable zip."
+msgstr "L'ultima release non ha uno zip scaricabile."
+
+msgid "Installed: v%1 (%2)"
+msgstr "Installato: v%1 (%2)"
+
+msgid "Beta"
+msgstr "Beta"
+
+msgid "Release"
+msgstr "Release"
+
+msgid "Cloud"
+msgstr "Cloud"
+
+msgid "Markdown files"
+msgstr "File Markdown"
+
+msgid "Updates"
+msgstr "Aggiornamenti"
+
+msgid "About"
+msgstr "Informazioni"
+
+msgid "Link copied to clipboard"
+msgstr "Link copiato negli appunti"
+
+msgid "Checking for updates…"
+msgstr "Controllo aggiornamenti…"
+
+msgid "Tomedown is up to date. Current version: %1"
+msgstr "Tomedown è aggiornato. Versione corrente: %1"
+
+msgid "Update available!"
+msgstr "Aggiornamento disponibile!"
+
+msgid "Installed: %1\nLatest: %2"
+msgstr "Installata: %1\nUltima: %2"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Update and restart"
+msgstr "Aggiorna e riavvia"
+
+msgid "Downloading update…"
+msgstr "Download dell'aggiornamento…"
+
+msgid "No download available for this release."
+msgstr "Nessun download disponibile per questa release."
+
+msgid "Download failed."
+msgstr "Download non riuscito."
+
+msgid "the connection failed"
+msgstr "la connessione è fallita"
+
+msgid "the connection timed out"
+msgstr "la connessione è scaduta"
+
+msgid "the secure connection failed"
+msgstr "la connessione sicura è fallita"
+
+msgid "there was no response"
+msgstr "nessuna risposta"
+
+msgid "the file could not be saved"
+msgstr "impossibile salvare il file"
+
+msgid "Installation failed: %1"
+msgstr "Installazione non riuscita: %1"
+
+msgid "Tomedown updated to v%1."
+msgstr "Tomedown aggiornato alla v%1."
+
+msgid "Restart KOReader now?"
+msgstr "Riavviare KOReader adesso?"
+
+msgid "Restart"
+msgstr "Riavvia"
+
+msgid "Could not check for updates."
+msgstr "Impossibile controllare gli aggiornamenti."
+
+msgid "Open the releases page in a browser?"
+msgstr "Aprire la pagina delle release in un browser?"
+
+msgid "Open"
+msgstr "Apri"
+
+msgid "Tomedown update available: v%1"
+msgstr "Aggiornamento Tomedown disponibile: v%1"
+
+msgid "Include page bookmarks"
+msgstr "Includi segnalibri di pagina"
+
+msgid "Auto-export on close"
+msgstr "Esportazione automatica alla chiusura"
+
+msgid "Page bookmarks"
+msgstr "Segnalibri di pagina"
+
+msgid "Beta Releases"
+msgstr "Beta Releases"
+
+msgid "Status"
+msgstr "Stato"
+
+msgid "Network: connected"
+msgstr "Rete: connessa"
+
+msgid "Network: offline"
+msgstr "Rete: disconnessa"
+
+msgid "Server: %1"
+msgstr "Server: %1"
+
+msgid "Server: not set"
+msgstr "Server: non impostato"
+
+msgid "Upload pending: %1 files"
+msgstr "Upload pendenti: %1 file"
+
+msgid "Last export: never"
+msgstr "Ultimo export: mai eseguito"
+
+msgid "%1 exported, %2 skipped"
+msgstr "%1 esportati, %2 saltati"
+
+msgid "Last export: %1 — %2"
+msgstr "Ultimo export: %1 — %2"
+
+msgid "%1 errors"
+msgstr "%1 errori"
+
+msgid "Last upload: never"
+msgstr "Ultimo upload: mai eseguito"
+
+msgid "%1 uploaded"
+msgstr "%1 caricati"
+
+msgid "Last upload: %1 — %2"
+msgstr "Ultimo upload: %1 — %2"
+
+msgid "Next upload: disabled in settings"
+msgstr "Prossimo upload: disattivato nelle impostazioni"
+
+msgid "Next upload: at the next connection"
+msgstr "Prossimo upload: al prossimo collegamento"
+
+msgid "Next upload: in progress"
+msgstr "Prossimo upload: in corso"
+
+msgid "Next upload: any moment now"
+msgstr "Prossimo upload: a breve"
+
+msgid "Closing"
+msgstr "Chiusura"
+
+msgid "Manual"
+msgstr "Manuale"
+
+msgid "Connect to YAOS Worker"
+msgstr "Collega a YAOS Worker"
+
+msgid "YAOS Worker URL"
+msgstr "URL di YAOS Worker"
+
+msgid "Next"
+msgstr "Avanti"
+
+msgid "Enter a valid HTTPS Worker URL."
+msgstr "Inserisci un URL HTTPS valido per Worker."
+
+msgid "Kobo upload token"
+msgstr "Token di caricamento Kobo"
+
+msgid "KOBO_SYNC_TOKEN from your YAOS Worker"
+msgstr "KOBO_SYNC_TOKEN del tuo YAOS Worker"
+
+msgid "Connect"
+msgstr "Collega"
+
+msgid "Enter the Kobo upload token."
+msgstr "Inserisci il token di caricamento Kobo."
+
+msgid "YAOS connected. Highlights will upload when Wi-Fi is available."
+msgstr "YAOS collegato. Gli evidenziati verranno caricati quando il Wi-Fi è disponibile."

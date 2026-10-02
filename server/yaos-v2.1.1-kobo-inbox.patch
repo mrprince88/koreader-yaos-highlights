@@ -1,0 +1,251 @@
+diff --git a/server/src/index.ts b/server/src/index.ts
+index 4f01f09..aa768e6 100644
+--- a/server/src/index.ts
++++ b/server/src/index.ts
+@@ -14,6 +14,7 @@ import {
+ 	supportsBuckets,
+ } from "./routes/auth";
+ import { handleBlobRoute } from "./routes/blobs";
++import { handleKoboInbox } from "./routes/koboInbox";
+ import { corsPreflight, html, json, withCors } from "./routes/http";
+ import { handleSnapshotRoute } from "./routes/snapshots";
+ import { handleSyncSocketRoute, parseSyncPath } from "./routes/syncSocket";
+@@ -346,6 +347,9 @@ const worker = {
+ 	async fetch(req: Request, env: Env): Promise<Response> {
+ 		const start = Date.now();
+ 		const url = new URL(req.url);
++		if (url.pathname === "/kobo/_index" || /^\/kobo\/[^/]+$/.test(url.pathname)) {
++			return handleKoboInbox(req, env);
++		}
+ 		const route = classifyWorkerRoute(req, url);
+ 		const isWebSocket = req.headers.get("upgrade")?.toLowerCase() === "websocket";
+ 		const cfRay = req.headers.get("cf-ray");
+diff --git a/server/src/koboNote.ts b/server/src/koboNote.ts
+new file mode 100644
+index 0000000..290410d
+--- /dev/null
++++ b/server/src/koboNote.ts
+@@ -0,0 +1,84 @@
++import * as Y from "yjs";
++
++const FOLDER = "Reading Highlights";
++const MANAGED_MARKER = "<!-- Managed by KOReader sync. Add personal notes in a separate Obsidian note. -->";
++const DELETED_MARKER = "<!-- KOReader export deleted: no annotations remain -->";
++
++type NoteResult = { status: "created" | "updated" | "deleted" | "unchanged" };
++
++function filePath(meta: unknown): { path: string; deleted: boolean } | null {
++	if (meta instanceof Y.Map) {
++		const path = meta.get("path");
++		if (typeof path !== "string") return null;
++		return { path, deleted: meta.get("deleted") === true || typeof meta.get("deletedAt") === "number" };
++	}
++	if (meta && typeof meta === "object") {
++		const value = meta as Record<string, unknown>;
++		if (typeof value.path !== "string") return null;
++		return { path: value.path, deleted: value.deleted === true || typeof value.deletedAt === "number" };
++	}
++	return null;
++}
++
++/** Mutate only Kobo-managed notes in the existing YAOS v3 document. */
++export function applyKoboNote(doc: Y.Doc, name: string, markdown: string): NoteResult {
++	if (doc.getMap("sys").get("schemaVersion") !== 3) {
++		throw new Error("unsupported vault schema");
++	}
++	const path = `${FOLDER}/${name}`;
++	const meta = doc.getMap<unknown>("meta");
++	const texts = doc.getMap<Y.Text>("idToText");
++	const active: string[] = [];
++	const tombstones: string[] = [];
++	meta.forEach((value, id) => {
++		const decoded = filePath(value);
++		if (decoded?.path !== path) return;
++		if (decoded.deleted) tombstones.push(id);
++		else active.push(id);
++	});
++	if (active.length > 1) throw new Error("duplicate vault path");
++	const id = active[0];
++	const current = id ? texts.get(id) : undefined;
++	if (id && (!current || !current.toString().includes(MANAGED_MARKER))) {
++		throw new Error("refusing to modify unmanaged note");
++	}
++	const deleted = markdown.trim() === DELETED_MARKER;
++	if (deleted) {
++		if (!id) return { status: "unchanged" };
++		doc.transact(() => {
++			const entry = new Y.Map<unknown>();
++			entry.set("path", path);
++			entry.set("deletedAt", Date.now());
++			meta.set(id, entry);
++		}, "kobo-upload");
++		return { status: "deleted" };
++	}
++	const content = `${markdown.trimEnd()}\n\n${MANAGED_MARKER}\n`;
++	if (current?.toString() === content) return { status: "unchanged" };
++	doc.transact(() => {
++		if (current && id) {
++			current.delete(0, current.length);
++			current.insert(0, content);
++			const existing = meta.get(id);
++			const entry: Y.Map<unknown> = existing instanceof Y.Map
++				? existing as Y.Map<unknown> : new Y.Map<unknown>();
++			entry.set("path", path);
++			entry.set("mtime", Date.now());
++			entry.set("device", "kobo");
++			entry.delete("deletedAt");
++			entry.delete("deleted");
++			if (!(existing instanceof Y.Map)) meta.set(id, entry);
++		} else {
++			for (const tombstone of tombstones) meta.delete(tombstone);
++			const newId = crypto.randomUUID().replace(/-/g, "");
++			const text = new Y.Text(content);
++			texts.set(newId, text);
++			const entry = new Y.Map<unknown>();
++			entry.set("path", path);
++			entry.set("mtime", Date.now());
++			entry.set("device", "kobo");
++			meta.set(newId, entry);
++		}
++	}, "kobo-upload");
++	return { status: current ? "updated" : "created" };
++}
+diff --git a/server/src/routes/koboInbox.ts b/server/src/routes/koboInbox.ts
+new file mode 100644
+index 0000000..42964f8
+--- /dev/null
++++ b/server/src/routes/koboInbox.ts
+@@ -0,0 +1,83 @@
++import type { Env } from "./types";
++import { getServerByName } from "partyserver";
++
++const PREFIX = "kobo-obsidian/";
++const MAX_NOTE_BYTES = 2 * 1024 * 1024;
++
++function authorized(request: Request, secret: string): boolean {
++	const header = request.headers.get("Authorization") ?? "";
++	if (!header.startsWith("Basic ")) return false;
++	let decoded: string;
++	try { decoded = atob(header.slice(6)); } catch { return false; }
++	const expected = `kobo:${secret}`;
++	if (decoded.length !== expected.length) return false;
++	let difference = 0;
++	for (let i = 0; i < expected.length; i++) difference |= decoded.charCodeAt(i) ^ expected.charCodeAt(i);
++	return difference === 0;
++}
++
++function safeName(raw: string): string | null {
++	let name: string;
++	try { name = decodeURIComponent(raw); } catch { return null; }
++	if (!name.endsWith(".md") || name.length > 180 || name.startsWith(".")) return null;
++	if (name.includes("/") || name.includes("\\") || name.includes("..") || /[\x00-\x1f]/.test(name)) return null;
++	return name;
++}
++
++function json(body: unknown, status = 200): Response {
++	return new Response(JSON.stringify(body), {
++		status,
++		headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
++	});
++}
++
++/** Isolated Markdown inbox. YAOS's CRDT and blob namespaces are untouched. */
++export async function handleKoboInbox(request: Request, env: Env): Promise<Response> {
++	if (!env.YAOS_BUCKET || !env.KOBO_SYNC_TOKEN || !env.KOBO_VAULT_ID) return json({ error: "unavailable" }, 503);
++	if (!authorized(request, env.KOBO_SYNC_TOKEN)) {
++		return new Response(null, { status: 401, headers: { "WWW-Authenticate": 'Basic realm="KOReader"' } });
++	}
++	const path = new URL(request.url).pathname;
++	if (request.method === "GET" && path === "/kobo/_index") {
++		const files: Array<{ name: string; etag: string; size: number }> = [];
++		let cursor: string | undefined;
++		do {
++			const page = await env.YAOS_BUCKET.list({ prefix: PREFIX, cursor, limit: 1000 });
++			for (const object of page.objects) files.push({ name: object.key.slice(PREFIX.length), etag: object.etag, size: object.size });
++			cursor = page.truncated ? page.cursor : undefined;
++		} while (cursor);
++		return json({ files });
++	}
++	const match = path.match(/^\/kobo\/([^/]+)$/);
++	const name = match && safeName(match[1]!);
++	if (!name) return json({ error: "not found" }, 404);
++	const key = PREFIX + name;
++	if (request.method === "GET") {
++		const object = await env.YAOS_BUCKET.get(key);
++		if (!object) return json({ error: "not found" }, 404);
++		return new Response(object.body, {
++			headers: { "Content-Type": "text/markdown; charset=utf-8", ETag: object.httpEtag, "Cache-Control": "no-store" },
++		});
++	}
++	if (request.method === "PUT") {
++		const claimedSize = Number(request.headers.get("Content-Length"));
++		if (!Number.isSafeInteger(claimedSize) || claimedSize < 1 || claimedSize > MAX_NOTE_BYTES) return json({ error: "invalid size" }, 413);
++		const body = await request.arrayBuffer();
++		if (body.byteLength !== claimedSize) return json({ error: "size mismatch" }, 400);
++		let markdown: string;
++		try { markdown = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(body); }
++		catch { return json({ error: "invalid utf-8" }, 400); }
++		const stub = await getServerByName(env.YAOS_SYNC, env.KOBO_VAULT_ID);
++		const applied = await stub.fetch(`https://internal/__yaos/kobo-note?name=${encodeURIComponent(name)}`, {
++			method: "PUT",
++			body: markdown,
++		});
++		if (!applied.ok) {
++			console.warn("[yaos:kobo] vault write rejected", { status: applied.status, body: await applied.text() });
++			return json({ error: "vault write failed" }, applied.status);
++		}
++		await env.YAOS_BUCKET.put(key, body, { httpMetadata: { contentType: "text/markdown; charset=utf-8" } });
++		return new Response(null, { status: 201 });
++	}
++	return json({ error: "method not allowed" }, 405);
++}
+diff --git a/server/src/routes/types.ts b/server/src/routes/types.ts
+index 6545460..e920b9c 100644
+--- a/server/src/routes/types.ts
++++ b/server/src/routes/types.ts
+@@ -3,6 +3,8 @@ import type { StoredServerConfig } from "../config";
+ 
+ export interface Env {
+ 	SYNC_TOKEN?: string;
++	KOBO_SYNC_TOKEN?: string;
++	KOBO_VAULT_ID?: string;
+ 	YAOS_CANONICAL_REPO?: string;
+ 	YAOS_SYNC: DurableObjectNamespace<VaultSyncServer>;
+ 	YAOS_CONFIG: DurableObjectNamespace;
+diff --git a/server/src/server.ts b/server/src/server.ts
+index d83ea85..15fa869 100644
+--- a/server/src/server.ts
++++ b/server/src/server.ts
+@@ -1,4 +1,5 @@
+ import * as Y from "yjs";
++import { applyKoboNote } from "./koboNote";
+ import { YServer } from "y-partyserver";
+ import type { Connection, ConnectionContext, WSMessage } from "partyserver";
+ import { runSerialized, runSingleFlight } from "./asyncConcurrency";
+@@ -288,6 +289,26 @@ export class VaultSyncServer extends YServer<Env> {
+ 		this.captureRoomIdHint(request);
+ 
+ 		const url = new URL(request.url);
++		if (request.method === "PUT" && url.pathname === "/__yaos/kobo-note") {
++			const name = url.searchParams.get("name");
++			if (!name || !name.endsWith(".md") || name.length > 180 || name.startsWith(".")
++				|| name.includes("/") || name.includes("\\") || name.includes("..")) {
++				return json({ error: "invalid name" }, 400);
++			}
++			await this.ensureDocumentLoaded();
++			let result;
++			try {
++				result = applyKoboNote(this.document, name, await request.text());
++			} catch (error) {
++				return json({ error: error instanceof Error ? error.message : "vault write failed" }, 409);
++			}
++			if (result.status !== "unchanged") {
++				const save = await this.getPersistenceCoordinator().enqueueSave();
++				if (!save.success) return json({ error: "vault persistence failed" }, 503);
++				await this.syncRoomMetaFromDocument();
++			}
++			return json(result);
++		}
+ 		if (request.method === "GET" && url.pathname === "/__yaos/meta") {
+ 			return json({
+ 				roomId: this.getRoomId(),
