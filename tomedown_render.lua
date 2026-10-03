@@ -182,15 +182,47 @@ function render.buildBookMd(book, opts)
         if a.date and tostring(a.date) ~= "" then
             meta[#meta + 1] = tostring(a.date)
         end
-        local note = a.note and tostring(a.note):gsub("[\r\n]+", " ") or nil
-        if note and note ~= "" then
-            meta[#meta + 1] = _("note: ") .. note
-        end
         if #meta == 0 then
             meta[1] = "…"
         end
         add("- " .. table.concat(meta, " · "))
         open = true
+    end
+
+    local notes = {}
+    for __, a in ipairs(annotations) do
+        if a.note and tostring(a.note) ~= "" then
+            notes[#notes + 1] = a
+        end
+    end
+    if #notes > 0 then
+        heading("# **" .. _("notes"):upper() .. ": " .. tostring(#notes) .. "**")
+        for __, a in ipairs(notes) do
+            add("")
+            local chapter = annotationChapter(a, opts.no_chapter_label)
+            add("## " .. chapter)
+            add("")
+            local note = tostring(a.note):gsub("\r\n", "\n"):gsub("\r", "\n")
+            for line in (note .. "\n"):gmatch("(.-)\n") do
+                add(line)
+            end
+            add("")
+            local text = tostring(a.text or ""):gsub("\r\n", "\n"):gsub("\r", "\n")
+            for line in (text .. "\n"):gmatch("(.-)\n") do
+                add("> " .. line)
+            end
+            local meta = {}
+            if a.page and tostring(a.page) ~= "" then
+                meta[#meta + 1] = "**p. " .. tostring(a.page) .. "**"
+            end
+            if a.date and tostring(a.date) ~= "" then
+                meta[#meta + 1] = tostring(a.date)
+            end
+            if #meta > 0 then
+                add("")
+                add("- " .. table.concat(meta, " · "))
+            end
+        end
     end
 
     local bookmarks = book.bookmarks or {}

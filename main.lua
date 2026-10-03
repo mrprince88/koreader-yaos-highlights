@@ -61,6 +61,43 @@ local Tomedown = WidgetContainer:extend{
     name = "tomedown",
 }
 
+-- KOReader currently emits AnnotationsModified when a note is added or
+-- removed, but not when the text of an existing note is edited. Bridge that
+-- missing event so an edit takes the same real-time export path as every
+-- other annotation change. The wrapper is process-wide and installed once.
+local function installNoteEditEventBridge()
+    local ok, ReaderBookmark = pcall(require, "apps/reader/modules/readerbookmark")
+    local ok_event, Event = pcall(require, "ui/event")
+    if not ok or not ok_event or ReaderBookmark._tomedown_note_event_bridge then
+        return
+    end
+    local original = ReaderBookmark.setBookmarkNote
+    if type(original) ~= "function" then
+        return
+    end
+    ReaderBookmark.setBookmarkNote = function(bookmark, item_or_index, is_new_note, new_note, caller_callback)
+        local index
+        if bookmark.bookmark_menu then
+            index = bookmark:getBookmarkItemIndex(item_or_index)
+        else
+            index = item_or_index
+        end
+        local annotation = bookmark.ui and bookmark.ui.annotation
+            and bookmark.ui.annotation.annotations[index]
+        local note_before = annotation and annotation.note
+        local function afterSave()
+            if caller_callback then
+                caller_callback()
+            end
+            if annotation and annotation.note ~= note_before and bookmark.ui then
+                bookmark.ui:handleEvent(Event:new("AnnotationsModified", { annotation }))
+            end
+        end
+        return original(bookmark, item_or_index, is_new_note, new_note, afterSave)
+    end
+    ReaderBookmark._tomedown_note_event_bridge = true
+end
+
 -- settings (everything in G_reader_settings under a single key)
 
 local function getSetting(key, default)
@@ -1729,6 +1766,7 @@ function Tomedown:migrateDefaults()
 end
 
 function Tomedown:init()
+    installNoteEditEventBridge()
     self.ui.menu:registerToMainMenu(self)
     -- Do NOT insert this instance into self.ui here: KOReader runs init()
     -- inside createPluginInstance and inserts the instance itself right

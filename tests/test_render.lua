@@ -47,8 +47,12 @@ T.check(T.contains(md, "\n# Capitolo I"), "first chapter")
 T.check(T.contains(md, "\n# Capitolo II"), "second chapter")
 T.check(T.contains(md, "> Prima frase."), "quote 1")
 T.check(T.contains(md, "> Seconda riga."), "quote 2")
-T.check(T.contains(md, "- **p. 10** · 02/09/2026 · note: nota utente"),
-    "meta row with page, date and note")
+T.check(T.contains(md, "- **p. 10** · 02/09/2026"),
+    "highlight metadata keeps page and date")
+T.check(not T.contains(md, "note: nota utente"), "note is not inline with highlight metadata")
+T.check(T.contains(md, "# **NOTES: 1**"), "notes get a separate section")
+T.check(T.contains(md, "## Capitolo I\n\nnota utente\n\n> Prima frase."),
+    "note keeps its chapter, text, and source highlight")
 T.check(T.contains(md, "- **p. 38** · 03/09/2026"), "meta row without note")
 local i10 = md:find("- **p. 10**", 1, true)
 local i38 = md:find("- **p. 38**", 1, true)
@@ -60,7 +64,7 @@ T.check(not T.contains(md, "![]("), "no image in the markdown")
 -- separators: under the stats, between chapters, never at the end of the file
 T.check(T.contains(md, "# **HIGHLIGHTS: 2**\n\n---\n\n# Capitolo I"),
     "separator between the stats and the first chapter")
-T.check(T.contains(md, "- **p. 10** · 02/09/2026 · note: nota utente\n\n---\n\n# Capitolo II"),
+T.check(T.contains(md, "- **p. 10** · 02/09/2026\n\n---\n\n# Capitolo II"),
     "separator when the chapter changes")
 T.check(not T.contains(md, "---\n\n---"), "no doubled separator")
 T.check(md:match("%-%-%-%s*$") == nil, "no separator at the end of the file")
@@ -88,14 +92,14 @@ T.check(T.contains(mixed, "\n# Capitolo I"), "chapter present")
 T.check(T.contains(mixed, "\n# Senza capitolo"), "fallback label")
 T.check(not T.contains(mixed, "\n## No chapter"), "no leftover English msgid")
 
--- multiline note flattened onto one line
+-- multiline notes keep their formatting in the separate notes section
 local multi = render.buildBookMd({
     title = "Note",
     count = 1,
     annotations = { { text = "X", note = "riga1\nriga2" } },
 })
-T.check(T.contains(multi, "note: riga1 riga2"), "multiline note on one line")
-T.check(not T.contains(multi, "note: riga1\n"), "the note does not break the meta line")
+T.check(T.contains(multi, "# **NOTES: 1**"), "multiline note gets the notes section")
+T.check(T.contains(multi, "riga1\nriga2\n\n> X"), "multiline note formatting is preserved")
 
 -- no page/date/note: ellipsis
 local bare = render.buildBookMd({
